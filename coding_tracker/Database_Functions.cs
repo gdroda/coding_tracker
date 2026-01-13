@@ -2,7 +2,6 @@
 using Microsoft.Extensions.Configuration;
 using Dapper;
 using Microsoft.Data.Sqlite;
-using System.Net.NetworkInformation;
 
 namespace coding_tracker
 {
@@ -49,25 +48,41 @@ namespace coding_tracker
 
         public static void AddSession()
         {
-            AnsiConsole.MarkupLine("Please enter date and time in the following format: DD/MM/YYYY HH:mm");
+            AnsiConsole.MarkupLine("Please enter date and time of session start in the following format: DD/MM/YYYY HH:mm");
             AnsiConsole.MarkupLine("Example: 14/09/1993 15:35\n");
-            string dateInput = AnsiConsole.Ask<string>("Input: ");
+            string dateInputStart = AnsiConsole.Ask<string>("Input: ");
 
-            DateTime date;
-            bool succParse = DateTime.TryParse(dateInput, out date);
-            if (succParse)
-                Console.WriteLine("Succ!");
-            else
+            int duration;
+            bool succParseStart = DateTime.TryParse(dateInputStart, out DateTime startDate);
+            if (!succParseStart)
             {
-                Console.WriteLine("Wrong Date format.");
+                Console.WriteLine("Wrong Date format. Session not logged.");
                 GenericMenu();
-            }          
-                
+            }
 
-            //var command = "INSERT INTO CodingSessions (StartTime, EndTime) VALUES (@start_time, @end_time)";
-            //EstablishConnection().Execute(command, new { start_time = "test_string", end_time = "test_2" });
+            AnsiConsole.MarkupLine("\nPlease enter date and time of session end in the following format: DD/MM/YYYY HH:mm");
+            AnsiConsole.MarkupLine("Example: 14/09/1993 15:35\n");
 
-            //ReturnToMenu();
+            string dateInputEnd = AnsiConsole.Ask<string>("Input: ");
+            bool succParseEnd = DateTime.TryParse(dateInputEnd, out DateTime endDate);
+            if (!succParseEnd)
+            {
+                Console.WriteLine("\nWrong Date format. Session not logged.");
+                GenericMenu();
+            }
+
+            duration = (int)endDate.Subtract(startDate).TotalMinutes;
+            if (duration <= 0)
+            {
+                Console.WriteLine("\nSession End Date is before Start Date. Session not logged.");
+                GenericMenu();
+            }
+            var command = "INSERT INTO CodingSessions (StartTime, EndTime, Duration) VALUES (@start_time, @end_time, @durationInMin)";
+            EstablishConnection().Execute(command, new { start_time = dateInputStart, end_time = dateInputEnd, durationInMin = duration });
+
+            AnsiConsole.MarkupLine("[green]\nSession successfully logged![/]");
+
+            GenericMenu();
         } 
 
         public static void ShowDatabase()
@@ -75,10 +90,20 @@ namespace coding_tracker
             var command = @"SELECT * FROM CodingSessions";
             var sessions = EstablishConnection().Query<CodingSession>(command).ToList();
 
+            var table = new Table();
+
+            table.AddColumn("Start Date");
+            table.AddColumn("End Date");
+            table.AddColumn("Duration");
+
             foreach (var ses in sessions)
             {
-                Console.WriteLine($"id = {ses.SessionId}, start time = {ses.StartTime}, end time = {ses.EndTime}, duration = {ses.SessionDuration}");
+                table.AddRow($"{ses.StartTime}", $"{ses.EndTime}", $"{ses.Duration} min.");
             }
+
+            AnsiConsole.Write(table);
+
+
 
             GenericMenu();
         }
@@ -97,9 +122,9 @@ namespace coding_tracker
 
     public class CodingSession()
     {
-        public int SessionId { get; set; }
+        public int Id { get; set; }
         public string? StartTime { get; set; }
         public string? EndTime { get; set; }
-        public int SessionDuration { get; set; }
+        public int Duration { get; set; }
     }
 }

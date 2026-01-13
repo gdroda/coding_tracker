@@ -12,6 +12,7 @@ namespace coding_tracker
 
             Console.Clear();
 
+            /* TESTING AREA!
             var fullDate = DateTime.Now;
             var minutes = (int)fullDate.TimeOfDay.TotalMinutes;
             Console.WriteLine(minutes+20);
@@ -23,6 +24,8 @@ namespace coding_tracker
             Console.WriteLine(DateTime.Parse("13/01/2026 03:35").Subtract(DateTime.Parse("13/01/2026 01:43")).TotalMinutes);
             //need to enforce input of: 10 chars + space + 5 chars >into> datetime.try{tryparse catch(exception ex){to check if valid.
 
+            */
+            
             var choice = AnsiConsole.Prompt(
                 new SelectionPrompt<string>()
                     .Title("[bold green]~ Welcome to your Code Tracker ~[/]")
