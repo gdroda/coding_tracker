@@ -92,20 +92,47 @@ namespace coding_tracker
 
             var table = new Table();
 
+            table.AddColumn("ID");
             table.AddColumn("Start Date");
             table.AddColumn("End Date");
             table.AddColumn("Duration");
 
             foreach (var ses in sessions)
             {
-                table.AddRow($"{ses.StartTime}", $"{ses.EndTime}", $"{ses.Duration} min.");
+                table.AddRow($"{ses.Id}", $"{ses.StartTime}", $"{ses.EndTime}", $"{ses.Duration} min.");
             }
 
             AnsiConsole.Write(table);
 
 
 
-            GenericMenu();
+            var choice = AnsiConsole.Prompt(
+                            new SelectionPrompt<string>()
+                                .Title("")
+                                .WrapAround()
+                                .HighlightStyle(new Style(Color.Green, Color.Black, Decoration.Bold))
+                                .AddChoices("Delete by ID", "Return"));
+            switch (choice)
+            {
+                case "Delete by ID":
+                    DeleteLineByID();
+                    break;
+                case "Return":
+                    ReturnToMenu();
+                    break;
+            }
+        }
+
+        static void DeleteLineByID()
+        {
+            int idToDelete = AnsiConsole.Ask<int>("Ented the ID of the log you wish to delete: ");
+
+            var commanda = $@"DELETE FROM CodingSessions WHERE Id={idToDelete}";
+            EstablishConnection().Execute(commanda);
+            var commandb = @"REINDEX CodingSessions";
+            EstablishConnection().Execute(commandb);
+
+            ShowDatabase();
         }
 
         public static void EmptyDatabase()
